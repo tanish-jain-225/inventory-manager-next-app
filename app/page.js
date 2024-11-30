@@ -52,6 +52,7 @@ export default function Home() {
 
     if (newProductsDrop[indexDrop].quantity === 0) {
       newProductsDrop.splice(indexDrop, 1);
+      window.location.reload();
     }
 
     setProducts(newProducts);
@@ -148,6 +149,7 @@ export default function Home() {
         <h1 className="text-2xl font-bold text-center text-gray-700 mb-4">
           Search a Product
         </h1>
+
         <div className="bg-white p-4 rounded-lg shadow-lg">
           <input
             className="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring focus:ring-gray-300"
@@ -227,6 +229,7 @@ export default function Home() {
               value={productForm.price || ""}
             />
           </div>
+          
           <button
             type="button"
             className="w-full px-4 py-2 bg-gray-700 text-white rounded-md"
