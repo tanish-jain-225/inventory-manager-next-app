@@ -13,6 +13,7 @@ const stockStr = 'stock'
 const collections = "inventory"
 
 const uri = `mongodb+srv://${user}:${pass}@cluster0.578qvco.mongodb.net/`;
+
 const options = {};
 
 let client;
