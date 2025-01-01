@@ -262,7 +262,7 @@ export default function Home() {
             {products.length === 0 && (
               <tr>
                 <td colSpan="3" className="text-center py-4">
-                  No products available
+                  No products available!
                 </td>
               </tr>
             )}
