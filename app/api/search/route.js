@@ -1,57 +1,97 @@
 import { MongoClient } from "mongodb";
 import { NextResponse } from "next/server";
 
-const user = 'tanish-jain-225'
-const pass = "tanishjain02022005"
-const stockStr = 'stock'
-const collections = "inventory"
+/**
+ * MongoDB connection configuration
+ * IMPORTANT: Move these credentials to environment variables!
+ * @see https://nextjs.org/docs/app/building-your-application/configuring/environment-variables
+ */
+// Security risk: Move these to .env.local file
+const MONGODB_URI = process.env.MONGODB_URI;
+const DB_NAME = process.env.DB_NAME;
+const COLLECTION_NAME = process.env.COLLECTION_NAME;
 
-const uri = `mongodb+srv://${user}:${pass}@cluster0.578qvco.mongodb.net/${stockStr}`;
-const options = {};
-
-let client;
+// Connection caching for improved performance
 let clientPromise;
 
-if (!uri) {
-    throw new Error("Please add your Mongo URI to .env.local");
-}
+/**
+ * Create and cache MongoDB client connection
+ * @returns {Promise<MongoClient>} MongoDB client connection
+ */
+const getMongoClient = async () => {
+  if (!MONGODB_URI) {
+    throw new Error("Please add your MongoDB URI to environment variables");
+  }
 
-if (process.env.NODE_ENV === "development") {
-    // In development mode, use a global variable so the client can be reused
-    // across module reloads caused by HMR (Hot Module Replacement).
+  if (process.env.NODE_ENV === "development") {
+    // In development, reuse the client across hot reloads
     if (!global._mongoClientPromise) {
-        client = new MongoClient(uri, options);
-        global._mongoClientPromise = client.connect();
+      const client = new MongoClient(MONGODB_URI);
+      global._mongoClientPromise = client.connect();
     }
-    clientPromise = global._mongoClientPromise;
-} else {
-    // In production mode, it's best to not use a global variable.
-    client = new MongoClient(uri, options);
-    clientPromise = client.connect();
-}
+    return global._mongoClientPromise;
+  } else {
+    // In production, create new connection if not cached
+    if (!clientPromise) {
+      const client = new MongoClient(MONGODB_URI);
+      clientPromise = client.connect();
+    }
+    return clientPromise;
+  }
+};
 
+/**
+ * Search API endpoint that queries products by name using regex
+ * @param {Request} request - The incoming HTTP request
+ * @returns {NextResponse} JSON response with matching products or error
+ */
 export async function GET(request) {
-    try {
-        const query = request.nextUrl.searchParams.get('query'); // Get the query parameter from the request URL
-        const client = await clientPromise;
-        const database = client.db(stockStr);
-        const collection = database.collection(collections);
-
-        // Constructing the pipeline to search by 'slug' field using regex
-        const pipeline = [
-            {
-                $match: {
-                    slug: { $regex: query, $options: 'i' } 
-                    // Case-insensitive regex match on 'slug'
-                }
-            }
-        ];
-
-        const products = await collection.aggregate(pipeline).toArray();
-
-        return NextResponse.json({ success: true, products });
-    } catch (error) {
-        console.error(error);
-        return NextResponse.json({ error: "An error occurred while fetching the collection." }, { status: 500 });
+  try {
+    // Input validation
+    const query = request.nextUrl.searchParams.get('query');
+    
+    if (!query || query.trim() === '') {
+      return NextResponse.json({ 
+        success: false, 
+        error: "Search query is required" 
+      }, { status: 400 });
     }
+
+    // Sanitize query to prevent injection (basic implementation)
+    const sanitizedQuery = query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    
+    // Connect to database
+    const client = await getMongoClient();
+    const database = client.db(DB_NAME);
+    const collection = database.collection(COLLECTION_NAME);
+
+    // Set a reasonable limit to prevent excessive results
+    const limit = 20;
+    
+    // Query with pagination support
+    const products = await collection.find({
+      slug: { $regex: sanitizedQuery, $options: 'i' }
+    })
+    .limit(limit)
+    .toArray();
+
+    // Return successful response
+    return NextResponse.json({ 
+      success: true, 
+      products,
+      count: products.length,
+      limit
+    });
+    
+  } catch (error) {
+    console.error("Search API error:", error);
+    
+    // Return appropriate error response
+    return NextResponse.json({ 
+      success: false,
+      error: "Failed to search products" 
+    }, { 
+      status: 500 
+    });
+  }
 }

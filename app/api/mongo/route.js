@@ -1,70 +1,137 @@
-// Mongodb atlas - Cluster0 - project0
-// Browse Collections and use accordingly
-// user - tanish-jain-225
-// password - tanishjain02022005
-// Use string - mongodb+srv://<user>:<password>@cluster0.578qvco.mongodb.net/
-
 import { MongoClient } from "mongodb";
 import { NextResponse } from "next/server";
 
-const user = 'tanish-jain-225'
-const pass = 'tanishjain02022005'
-const stockStr = 'stock'
-const collections = "inventory"
+/**
+ * MongoDB connection configuration
+ * SECURITY CRITICAL: These credentials must be moved to environment variables
+ */
+const MONGODB_URI = process.env.MONGODB_URI;
+const DB_NAME = process.env.DB_NAME;
+const COLLECTION_NAME = process.env.COLLECTION_NAME;
 
-const uri = `mongodb+srv://${user}:${pass}@cluster0.578qvco.mongodb.net/`;
-
+// Connection options
 const options = {};
 
+// Connection caching
 let client;
 let clientPromise;
 
-if (!uri) {
-    throw new Error("Please add your Mongo URI to .env.local");
+/**
+ * Initialize and cache MongoDB client connection
+ */
+if (!MONGODB_URI) {
+  throw new Error("MongoDB URI is required. Please add it to your environment variables.");
 }
 
+// Different connection handling for development vs production
 if (process.env.NODE_ENV === "development") {
-    // In development mode, use a global variable so the client can be reused
-    // across module reloads caused by HMR (Hot Module Replacement).
-    if (!global._mongoClientPromise) {
-        client = new MongoClient(uri, options);
-        global._mongoClientPromise = client.connect();
-    }
-    clientPromise = global._mongoClientPromise;
+  // In development, use a global variable to preserve connection during hot reloads
+  if (!global._mongoClientPromise) {
+    client = new MongoClient(MONGODB_URI, options);
+    global._mongoClientPromise = client.connect();
+  }
+  clientPromise = global._mongoClientPromise;
 } else {
-    // In production mode, it's best to not use a global variable.
-    client = new MongoClient(uri, options);
-    clientPromise = client.connect();
+  // In production, create a new connection
+  client = new MongoClient(MONGODB_URI, options);
+  clientPromise = client.connect();
 }
 
+/**
+ * GET handler - Retrieves all products from inventory
+ * @param {Request} request - Incoming HTTP request
+ * @returns {NextResponse} JSON response with inventory data or error
+ */
 export async function GET(request) {
-    try {
-        const client = await clientPromise;
-        const database = client.db(`${stockStr}`);
-        const collection = database.collection(`${collections}`);
+  try {
+    // Connect to database
+    const client = await clientPromise;
+    const database = client.db(DB_NAME);
+    const collection = database.collection(COLLECTION_NAME);
 
-        const query = {};
-        const inventory = await collection.find(query).toArray();
+    // Fetch all inventory items
+    const inventory = await collection.find({}).toArray();
 
-        return NextResponse.json({ inventory });
-    } catch (error) {
-        console.error(error);
-        return NextResponse.json({ error: "An error occurred while fetching the collection." }, { status: 500 });
-    }
+    // Return successful response
+    return NextResponse.json({ 
+      success: true, 
+      inventory,
+      count: inventory.length 
+    });
+  } catch (error) {
+    // Log error and return appropriate response
+    console.error("MongoDB GET error:", error);
+    return NextResponse.json({ 
+      success: false, 
+      error: "Failed to fetch inventory data" 
+    }, { 
+      status: 500 
+    });
+  }
 }
 
+/**
+ * POST handler - Adds a new product to inventory
+ * @param {Request} request - Incoming HTTP request with product data
+ * @returns {NextResponse} JSON response with operation result
+ */
 export async function POST(request) {
-    try {
-        const body = await request.json();
-        const client = await clientPromise;
-        const database = client.db(`${stockStr}`);
-        const collection = database.collection(`${collections}`);
-
-        const result = await collection.insertOne(body);
-
-        return NextResponse.json({ result, ok: true });
-    } catch (error) {
-        console.error(error);
-        return NextResponse.json({ error: "An error occurred while adding the product." }, { status: 500 });
+  try {
+    // Parse request body
+    const body = await request.json();
+    
+    // Validate required fields
+    if (!body.slug || typeof body.slug !== 'string' || body.slug.trim() === '') {
+      return NextResponse.json({ 
+        success: false, 
+        error: "Product name (slug) is required" 
+      }, { 
+        status: 400 
+      });
     }
+    
+    // Connect to database
+    const client = await clientPromise;
+    const database = client.db(DB_NAME);
+    const collection = database.collection(COLLECTION_NAME);
+
+    // Check for duplicate product
+    const existingProduct = await collection.findOne({ slug: body.slug });
+    if (existingProduct) {
+      return NextResponse.json({ 
+        success: false, 
+        error: "A product with this name already exists" 
+      }, { 
+        status: 409 
+      });
+    }
+
+    // Format the product data
+    const product = {
+      slug: body.slug,
+      quantity: Number(body.quantity) || 0,
+      price: Number(body.price) || 0
+    };
+
+    // Insert the product
+    const result = await collection.insertOne(product);
+
+    // Return successful response
+    return NextResponse.json({ 
+      success: true, 
+      result,
+      product
+    }, { 
+      status: 201 
+    });
+  } catch (error) {
+    // Log error and return appropriate response
+    console.error("MongoDB POST error:", error);
+    return NextResponse.json({ 
+      success: false, 
+      error: "Failed to add product" 
+    }, { 
+      status: 500 
+    });
+  }
 }
