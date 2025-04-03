@@ -83,6 +83,8 @@ export default function Home() {
     // Remove products with zero quantity
     if (index !== -1 && newProducts[index].quantity === 0) {
       newProducts.splice(index, 1);
+      setQuery("");
+      setDropdown([]);
     }
 
     if (indexDrop !== -1 && newProductsDrop[indexDrop].quantity === 0) {
@@ -194,8 +196,15 @@ export default function Home() {
   const fetchDropdownProducts = async (newQueryInp) => {
     setLoading(true);
     setDropdown([]);
+    // Skip API call if query is empty
+    if (newQueryInp.trim() === "") {
+      setLoading(false);
+      setDropdown([]);
+      return;
+    }
+    // Fetch products from API based on search query
     try {
-      const responseDrop = await fetch(`/api/search?query=${encodeURIComponent(newQueryInp)}`);
+      const responseDrop = await fetch(`/api/search?query=${encodeURIComponent(newQueryInp.trim())}`);
       if (!responseDrop.ok) {
         throw new Error(`Search request failed with status: ${responseDrop.status}`);
       }
