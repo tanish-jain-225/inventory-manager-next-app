@@ -76,6 +76,11 @@ export default function Home() {
     const quantityChange = action === "plus" ? 1 : -1;
     const newQuantity = parseInt(initialQuantity) + quantityChange;
 
+    // If new quantity is zero then remove the product from the list
+    if (newQuantity === 0) {
+      setProducts(newProducts.filter((item) => item.slug !== slug));
+    }
+
     // Update quantities in both arrays
     if (index !== -1) newProducts[index].quantity = newQuantity;
     if (indexDrop !== -1) newProductsDrop[indexDrop].quantity = newQuantity;
@@ -393,6 +398,7 @@ export default function Home() {
                 <th className="py-2 px-4 border-b">Product Name</th>
                 <th className="py-2 px-4 border-b">Quantity</th>
                 <th className="py-2 px-4 border-b">Price</th>
+                <th className="py-2 px-4 border-b">Total Value</th>
               </tr>
             </thead>
             <tbody>
@@ -401,11 +407,12 @@ export default function Home() {
                   <td className="px-4 py-2 border-b">{product.slug}</td>
                   <td className="px-4 py-2 border-b">{product.quantity}</td>
                   <td className="px-4 py-2 border-b">₹{product.price}</td>
+                  <td className="px-4 py-2 border-b">₹{product.quantity * product.price}</td>
                 </tr>
               ))}
               {products.length === 0 && (
                 <tr>
-                  <td colSpan="3" className="text-center py-4">
+                  <td colSpan="4" className="text-center py-4">
                     No products available!
                   </td>
                 </tr>
