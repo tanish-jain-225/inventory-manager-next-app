@@ -1,14 +1,20 @@
 ## NEXT App deployment on vercel 
 
-<!-- MongoDb Atlas  -->
+### MongoDB Configuration
+- Add your MongoDB URI, database name, and collection name to a `.env.local` file in the root directory:
+  ```
+  MONGODB_URI=your-mongodb-uri
+  DB_NAME=your-database-name
+  COLLECTION_NAME=your-collection-name
+  ```
 
-<!-- mongodb+srv://<user>:<password>@cluster0.578qvco.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0 -->
-
-<!-- user: tanish-jain-225  -->
-<!-- password: tanishjain02022005 -->
-
-- Check File structure of app as (MainFolder-> 1.AppFolder and its components in it and 2.Config and .js files of next app and 3.package.json and packagelock.json)
-- Ensure all required modules are specified in 'packagelock.json'. 
-- Now Deploy App on vercel as NextJs App type with root folder same as parent folder i.e. './'. 
-- After automatic deployement app is ready to use. 
-- Use depolyed app link and start app with it anytime and anywhere. 
+### Deployment Steps
+1. Check the file structure of the app:
+   - Main folder contains:
+     - `app` folder and its components.
+     - Configuration and `.js` files of the Next.js app.
+     - `package.json` and `package-lock.json`.
+2. Ensure all required modules are specified in `package-lock.json`.
+3. Deploy the app on Vercel as a Next.js app with the root folder set to `./`.
+4. After automatic deployment, the app is ready to use.
+5. Use the deployed app link to access the app anytime and anywhere.

@@ -1,5 +1,6 @@
 import { MongoClient } from "mongodb";
 import { NextResponse } from "next/server";
+import "dotenv/config"; // Load environment variables
 
 /**
  * MongoDB connection configuration
