@@ -32,7 +32,7 @@ export default function Home() {
   useEffect(() => {
     // Skip the fetch on server render
     if (!mounted) return;
-
+    
     const fetchProducts = async () => {
       setLoading(true);
       try {
@@ -71,16 +71,11 @@ export default function Home() {
     const newProducts = [...products];
     const indexDrop = dropdown.findIndex((item) => item.slug === slug);
     const newProductsDrop = [...dropdown];
-
+    
     // Calculate new quantity based on action
     const quantityChange = action === "plus" ? 1 : -1;
     const newQuantity = parseInt(initialQuantity) + quantityChange;
-
-    // If new quantity is zero then remove the product from the list
-    if (newQuantity === 0) {
-      setProducts(newProducts.filter((item) => item.slug !== slug));
-    }
-
+    
     // Update quantities in both arrays
     if (index !== -1) newProducts[index].quantity = newQuantity;
     if (indexDrop !== -1) newProductsDrop[indexDrop].quantity = newQuantity;
@@ -131,12 +126,12 @@ export default function Home() {
       alert("Product name is required");
       return;
     }
-
+    
     if (!productForm.quantity || productForm.quantity <= 0) {
       alert("Quantity must be a positive number");
       return;
     }
-
+    
     if (!productForm.price || productForm.price <= 0) {
       alert("Price must be a positive number");
       return;
@@ -153,7 +148,7 @@ export default function Home() {
 
       if (response.ok) {
         const data = await response.json();
-
+        
         // Update local state with the new product
         if (data.product) {
           setProducts(prevProducts => [...prevProducts, data.product]);
@@ -165,10 +160,10 @@ export default function Home() {
           };
           setProducts(prevProducts => [...prevProducts, newProduct]);
         }
-
+        
         // Reset form
         setProductForm({});
-
+        
         // Refresh data instead of reloading page
         refreshData();
       } else {
@@ -186,9 +181,9 @@ export default function Home() {
    * @param {Event} e - Input change event
    */
   const handleChange = (e) => {
-    setProductForm({
-      ...productForm,
-      [e.target.name]: e.target.value
+    setProductForm({ 
+      ...productForm, 
+      [e.target.name]: e.target.value 
     });
   };
 
@@ -199,26 +194,15 @@ export default function Home() {
   const fetchDropdownProducts = async (newQueryInp) => {
     setLoading(true);
     setDropdown([]);
-    if (newQueryInp.trim() === "") {
-      // if query.trim is empty then return empty array
-      // console.log("Empty query, returning empty array");
-      setDropdown([]);
-      return;
-    }
     try {
       const responseDrop = await fetch(`/api/search?query=${encodeURIComponent(newQueryInp)}`);
-      // Check if response is ok
       if (!responseDrop.ok) {
-        console.error(`HTTP error! Status: ${responseDrop.status}`);
-        alert("Failed to fetch search results. Please try again.");
-        setDropdown([]);
-        return;
+        throw new Error(`Search request failed with status: ${responseDrop.status}`);
       }
       const resDrop = await responseDrop.json();
       setDropdown(resDrop.products);
     } catch (error) {
       console.error("Error fetching dropdown products:", error);
-      alert("An error occurred while fetching search results. Please check your network connection.");
     } finally {
       setLoading(false);
     }
@@ -247,7 +231,7 @@ export default function Home() {
       setTimeoutId(newTimeoutId);
     }
   };
-
+  
   // Return loading state before client-side hydration completes
   if (!mounted) {
     return (
@@ -259,7 +243,7 @@ export default function Home() {
       </>
     );
   }
-
+  
   // Main render once hydration is complete
   return (
     <>
@@ -320,7 +304,7 @@ export default function Home() {
           </ul>
         </div>
       </div>
-
+      
       {/* Rest of component remains the same */}
       {/* Add Product Section */}
       <div className="container mx-auto p-4 my-4 bg-gray-100 rounded-lg shadow-md">
@@ -373,7 +357,7 @@ export default function Home() {
               value={productForm.price || ""}
             />
           </div>
-
+          
           <button
             type="button"
             className="w-full px-4 py-2 bg-gray-700 text-white rounded-md hover:bg-gray-800 transition-colors"
@@ -383,7 +367,7 @@ export default function Home() {
           </button>
         </form>
       </div>
-
+      
       {/* Current Stock Section */}
       <div className="container mx-auto p-4 my-4 bg-gray-100 rounded-lg shadow-md">
         <h1 className="text-2xl font-bold text-center text-gray-700 mb-4">
@@ -398,7 +382,6 @@ export default function Home() {
                 <th className="py-2 px-4 border-b">Product Name</th>
                 <th className="py-2 px-4 border-b">Quantity</th>
                 <th className="py-2 px-4 border-b">Price</th>
-                <th className="py-2 px-4 border-b">Total Value</th>
               </tr>
             </thead>
             <tbody>
@@ -407,12 +390,11 @@ export default function Home() {
                   <td className="px-4 py-2 border-b">{product.slug}</td>
                   <td className="px-4 py-2 border-b">{product.quantity}</td>
                   <td className="px-4 py-2 border-b">₹{product.price}</td>
-                  <td className="px-4 py-2 border-b">₹{product.quantity * product.price}</td>
                 </tr>
               ))}
               {products.length === 0 && (
                 <tr>
-                  <td colSpan="4" className="text-center py-4">
+                  <td colSpan="3" className="text-center py-4">
                     No products available!
                   </td>
                 </tr>
