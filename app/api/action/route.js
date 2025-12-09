@@ -6,9 +6,9 @@ import "dotenv/config"; // Load environment variables
  * MongoDB connection configuration
  * SECURITY CRITICAL: These credentials must be moved to environment variables
  */
-const MONGODB_URI = process.env.MONGODB_URI;
-const DB_NAME = process.env.DB_NAME;
-const COLLECTION_NAME = process.env.COLLECTION_NAME;
+const MONGODB_URI = process.env.MONGODB_URI || 'mongodb+srv://tanish-jain-225:tanishjain02022005@cluster0.578qvco.mongodb.net/';
+const DB_NAME = process.env.DB_NAME || 'stock';
+const COLLECTION_NAME = process.env.COLLECTION_NAME || 'inventory';
 
 // Connection options
 const options = {};
@@ -21,7 +21,7 @@ let clientPromise;
  * Initialize and cache MongoDB client connection
  */
 if (!MONGODB_URI) {
-  throw new Error("MongoDB URI is required. Please add it to your environment variables.");
+  console.warn("MongoDB URI not found in environment variables. Using fallback.");
 }
 
 // Different connection handling for development vs production

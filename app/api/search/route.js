@@ -8,9 +8,9 @@ import "dotenv/config"; // Load environment variables
  * @see https://nextjs.org/docs/app/building-your-application/configuring/environment-variables
  */
 // Security risk: Move these to .env.local file
-const MONGODB_URI = process.env.MONGODB_URI;
-const DB_NAME = process.env.DB_NAME;
-const COLLECTION_NAME = process.env.COLLECTION_NAME;
+const MONGODB_URI = process.env.MONGODB_URI || 'mongodb+srv://tanish-jain-225:tanishjain02022005@cluster0.578qvco.mongodb.net/';
+const DB_NAME = process.env.DB_NAME || 'stock';
+const COLLECTION_NAME = process.env.COLLECTION_NAME || 'inventory';
 
 // Connection caching for improved performance
 let clientPromise;
@@ -21,7 +21,7 @@ let clientPromise;
  */
 const getMongoClient = async () => {
   if (!MONGODB_URI) {
-    throw new Error("Please add your MongoDB URI to environment variables");
+    console.warn("MongoDB URI not found in environment variables. Using fallback.");
   }
 
   if (process.env.NODE_ENV === "development") {
